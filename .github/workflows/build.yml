@@ -1,0 +1,32 @@
+name: Build APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - name: Arrange files
+        run: |
+          mkdir -p src/main/java/com/wakeup/scanalarm src/main/assets
+          cp AndroidManifest.xml src/main/AndroidManifest.xml
+          cp MainActivity.java src/main/java/com/wakeup/scanalarm/MainActivity.java
+          cp index.html src/main/assets/index.html
+      - name: Build
+        run: gradle assembleDebug -Pandroid.useAndroidX=true --no-daemon
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Scan Alarm build ${{ github.run_number }}
+          files: build/outputs/apk/debug/*.apk
